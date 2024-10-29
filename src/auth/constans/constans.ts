@@ -1,0 +1,7 @@
+export const Constants = {
+  secret:
+    'DO NOT USE THIS VALUE. INSTEAD, CREATE A COMPLEX SECRET AND KEEP IT SAFE OUTSIDE OF THE SOURCE CODE.',
+  expired: '5m',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_OAUTH_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_OAUTH_CLIENT_SECRET || '',
+};
