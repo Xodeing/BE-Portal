@@ -16,5 +16,8 @@ COPY . .
 # Expose port yang digunakan aplikasi
 EXPOSE 3000
 
+# Mengompilasi TypeScript
+RUN npm run build
+
 # Jalankan aplikasi
 CMD ["node", "dist/main.js"]
