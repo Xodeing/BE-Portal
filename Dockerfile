@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Generate Prisma client
-RUN npx Prisma Generate
+RUN npx prisma generate
 
 # Build nest
 RUN npx nest build
