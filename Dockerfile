@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Jalankan aplikasi
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]
