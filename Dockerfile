@@ -1,5 +1,5 @@
 # Gunakan image Node.js resmi sebagai base image
-FROM node:18-alpine
+FROM node:20.12.2
 
 # Set working directory
 WORKDIR /app
@@ -12,6 +12,12 @@ RUN npm install
 
 # Salin semua file ke dalam container
 COPY . .
+
+# Generate Prisma client
+RUN npx Prisma Generate
+
+# Build nest
+RUN npx nest build
 
 # Expose port yang digunakan aplikasi
 EXPOSE 3000
