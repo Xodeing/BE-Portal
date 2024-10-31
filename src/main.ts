@@ -3,22 +3,16 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter';
 import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
-import * as cors from 'cors'; // Import modul cors
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Mengaktifkan CORS (opsi default)
-  app.enableCors();
-
-  // Atau mengatur konfigurasi CORS secara manual
-  app.use(
-    cors({
-      origin: 'http://localhost:3000', // Sesuaikan dengan origin frontend Anda
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-      credentials: true,
-    }),
-  );
+  // Konfigurasi CORS dengan spesifik origin
+  app.enableCors({
+    origin: 'http://localhost:3000', // Sesuaikan dengan origin frontend Anda
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Izinkan pengiriman cookie
+  });
 
   // Set up global pipes dengan whitelist dan transform
   app.useGlobalPipes(
@@ -54,5 +48,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-
-//bisa
