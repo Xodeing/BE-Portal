@@ -61,7 +61,7 @@ export class AuthService {
       },
     });
 
-    const resetLink = `https://cms.eventives.id/event-auth/ChangePassword?token=${token}`;
+    const resetLink = `http://localhost:3000?token=${token}`;
 
     try {
       await this.mail.sendMail({

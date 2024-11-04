@@ -174,10 +174,12 @@ export class EventsService {
 
     const whereClause: any = {};
 
+    // Tambahkan filter kategori event jika ada
     if (eventCategory) {
       whereClause.eventCategoryId = eventCategory;
     }
 
+    // Tambahkan filter tanggal mulai jika diberikan
     if (startDate) {
       let start = new Date(startDate);
       if (!startDate.includes('T')) {
@@ -189,6 +191,7 @@ export class EventsService {
       whereClause.eventDateStart = { gte: start };
     }
 
+    // Tambahkan filter tanggal akhir jika diberikan
     if (endDate) {
       let end = new Date(endDate);
       if (!endDate.includes('T')) {
@@ -199,6 +202,13 @@ export class EventsService {
       }
       whereClause.eventDateEnd = { lte: end };
     }
+
+    // Tambahkan filter agar hanya menampilkan event yang belum terlewat
+    const today = new Date();
+    whereClause.eventDateStart = {
+      ...whereClause.eventDateStart,
+      gte: today,
+    };
 
     try {
       const events = await this.prisma.events.findMany({
@@ -217,7 +227,6 @@ export class EventsService {
       throw new Error('Failed to fetch upcoming events');
     }
   }
-
   async getEventById(id: number): Promise<EventsEntity> {
     try {
       const event = await this.prisma.events.findUnique({

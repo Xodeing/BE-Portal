@@ -29,6 +29,7 @@ export class AuthController {
     return this.authService.login(email, password);
   }
 
+  @ApiBearerAuth()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
@@ -36,6 +37,7 @@ export class AuthController {
   }
 
   // Google akan memanggil URL ini setelah login
+  @ApiBearerAuth()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req, @Res() res: Response) {
@@ -44,9 +46,10 @@ export class AuthController {
       httpOnly: true,
       secure: false, // Ubah menjadi true jika Anda menggunakan HTTPS
     });
-    res.redirect('https://https://eventives.vercel.app');
+    res.redirect('http://localhost:3000');
   }
 
+  @ApiBearerAuth()
   @ApiTags('Reset Password')
   @Post('request-password-reset')
   async requestPasswordReset(@Body('email') email: string) {
@@ -56,6 +59,7 @@ export class AuthController {
     return this.authS.requestPasswordReset(email);
   }
 
+  @ApiBearerAuth()
   @ApiTags('Reset Password')
   @Post('reset-password')
   async resetPassword(
