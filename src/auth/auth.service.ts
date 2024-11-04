@@ -7,16 +7,23 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthEntity } from './entities/auth.entity';
 import * as bcrypt from 'bcrypt';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { v4 as uuidv4 } from 'uuid'; // Pastikan Anda menginstal uuid
+import { randomBytes } from 'crypto';
+import { addHours } from 'date-fns';
+// import { ResetPasswordDto } from './dto/reset-password.dto';
+// import { v4 as uuidv4 } from 'uuid'; // Pastikan Anda menginstal uuid
 
 @Injectable()
 export class AuthService {
+  async loginWithGoogle(user: any): Promise<{ accessToken: string }> {
+    const payload = { userId: user.id, email: user.email }; // Atur payload sesuai dengan kebutuhan Anda
+    const accessToken = this.jwtService.sign(payload); // Membuat token JWT
+    return { accessToken }; // Kembalikan objek dengan accessToken
+  }
+  mail: any;
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    // private mail: MailService,
   ) {}
 
   // Fungsi login untuk autentikasi user dan mengembalikan token JWT
@@ -39,77 +46,58 @@ export class AuthService {
   }
 
   // Permintaan untuk reset password tanpa memerlukan request body
-  async requestPasswordReset() {
-    const user = await this.prisma.users.findFirst();
-
+  async requestPasswordReset(email: string) {
+    const user = await this.prisma.users.findUnique({ where: { email } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Email not found');
     }
 
-    const token = uuidv4(); // Menggunakan UUID sebagai token
-    await this.prisma.passwordResetRequest.create({
+    const token = randomBytes(32).toString('hex');
+    await this.prisma.token.create({
       data: {
         userId: user.id,
-        token: token,
-        expiresAt: new Date(Date.now() + 3600000), // Token berlaku selama 1 jam
+        token,
+        createdAt: new Date(),
       },
     });
 
-    // Logika untuk mengirim email (implementasi pengiriman email diperlukan)
-    // await this.sendResetEmail(user.email, token);
+    const resetLink = `https://cms.eventives.id/event-auth/ChangePassword?token=${token}`;
+
+    try {
+      await this.mail.sendMail({
+        to: email,
+        subject: 'Password Reset',
+        html: `Click <a href="${resetLink}">here</a> to reset your password`,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new NotFoundException('Failed to send password reset email');
+    }
+
+    return { message: 'A password reset link has been sent to your email.' };
   }
 
-  // Reset password menggunakan `resetPasswordDto`
-  async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const resetRequest = await this.prisma.passwordResetRequest.findUnique({
-      where: { token: resetPasswordDto.token },
+  async resetPassword(token: string, newPassword: string) {
+    const tokenRecord = await this.prisma.token.findUnique({
+      where: { token },
+      include: { user: true },
     });
 
-    if (!resetRequest || resetRequest.expiresAt < new Date()) {
+    if (!tokenRecord) {
       throw new NotFoundException('Invalid or expired token');
     }
-
-    const user = await this.prisma.users.findUnique({
-      where: { id: resetRequest.userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
+    const expiry = addHours(tokenRecord.createdAt, 2);
+    if (new Date() > expiry) {
+      throw new NotFoundException('Token expired');
     }
-
-    const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.prisma.users.update({
-      where: { id: user.id },
+      where: { id: tokenRecord.userId },
       data: { password: hashedPassword },
     });
 
-    // Hapus permintaan reset setelah digunakan
-    await this.prisma.passwordResetRequest.delete({
-      where: { id: resetRequest.id },
-    });
-  }
+    await this.prisma.token.delete({ where: { id: tokenRecord.id } });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async create(createAuthDto: CreateAuthDto) {
-    // Implementasi untuk membuat user baru
-  }
-
-  async findAll() {
-    // Implementasi untuk menemukan semua user
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async findOne(id: number) {
-    // Implementasi untuk menemukan user berdasarkan ID
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async update(id: number, updateAuthDto: UpdateAuthDto) {
-    // Implementasi untuk memperbarui user berdasarkan ID
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async remove(id: number) {
-    // Implementasi untuk menghapus user berdasarkan ID
+    return { message: 'Password reset successfully' };
   }
 }

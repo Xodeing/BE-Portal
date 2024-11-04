@@ -7,7 +7,10 @@ export class CreateScheduleDto {
     type: String,
     example: '2024-12-31T10:00:00.000Z',
   })
-  @IsDateString({}, { message: 'Activity start date must be a valid ISO 8601 date string' })
+  @IsDateString(
+    {},
+    { message: 'Activity start date must be a valid ISO 8601 date string' },
+  )
   activityStart: string;
 
   @ApiProperty({
@@ -15,7 +18,10 @@ export class CreateScheduleDto {
     type: String,
     example: '2024-12-31T12:00:00.000Z',
   })
-  @IsDateString({}, { message: 'Activity end date must be a valid ISO 8601 date string' })
+  @IsDateString(
+    {},
+    { message: 'Activity end date must be a valid ISO 8601 date string' },
+  )
   activityEnd: string;
 
   @ApiProperty({

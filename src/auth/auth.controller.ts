@@ -3,26 +3,22 @@ import {
   Get,
   Post,
   Body,
-  // Patch,
-  // Param,
-  // Delete,
   Req,
-  Query, // Menambahkan decorator Query untuk menangani query parameter
+  Res,
   UseGuards,
-  HttpCode,
-  HttpStatus, // Menambahkan decorator HttpCode dan HttpStatus untuk respon kode 201
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-// import { CreateAuthDto } from './dto/create-auth.dto';
-// import { UpdateAuthDto } from './dto/update-auth.dto';
 import { ApiOkResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthEntity } from './entities/auth.entity';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express'; // Pastikan Anda mengimpor Response
 
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
+  authS: any;
   constructor(private readonly authService: AuthService) {}
 
   @ApiTags('auth')
@@ -33,7 +29,6 @@ export class AuthController {
     return this.authService.login(email, password);
   }
 
-  // Mengarahkan user ke halaman login Google
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
@@ -43,57 +38,33 @@ export class AuthController {
   // Google akan memanggil URL ini setelah login
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req) {
-    // User telah berhasil login, disini Anda bisa mengakses informasi user
-    return {
-      message: 'User info from Google',
-      user: req.user,
-    };
+  async callback(@Req() req, @Res() res: Response) {
+    const jwt = await this.authService.loginWithGoogle(req.user);
+    res.cookie('accessToken', jwt.accessToken, {
+      httpOnly: true,
+      secure: false, // Ubah menjadi true jika Anda menggunakan HTTPS
+    });
+    res.redirect('https://https://eventives.vercel.app');
   }
 
-  // @Post()
-  // @ApiBearerAuth()
-  // create(@Body() createAuthDto: CreateAuthDto) {
-  //   return this.authService.create(createAuthDto);
-  // }
-
-  // @Get()
-  // @ApiBearerAuth()
-  // findAll() {
-  //   return this.authService.findAll();
-  // }
-
-  // @Get(':id')
-  // @ApiBearerAuth()
-  // findOne(@Param('id') id: string) {
-  //   return this.authService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // @ApiBearerAuth()
-  // update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-  //   return this.authService.update(+id, updateAuthDto);
-  // }
-
-  // @Delete(':id')
-  // @ApiBearerAuth()
-  // remove(@Param('id') id: string) {
-  //   return this.authService.remove(+id);
-  // }
-
-  // Endpoint untuk permintaan reset password tanpa parameter
+  @ApiTags('Reset Password')
   @Post('request-password-reset')
-  @HttpCode(HttpStatus.CREATED) // Set respons HTTP status code 201
-  async requestPasswordReset() {
-    await this.authService.requestPasswordReset();
+  async requestPasswordReset(@Body('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.authS.requestPasswordReset(email);
   }
 
-  // Endpoint untuk reset password
+  @ApiTags('Reset Password')
   @Post('reset-password')
   async resetPassword(
-    @Query('token') token: string,
-    @Query('newPassword') newPassword: string,
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
   ) {
-    return this.authService.resetPassword({ token, newPassword });
+    if (!token || !newPassword) {
+      throw new BadRequestException('Token and new password are required');
+    }
+    return this.authS.resetPassword(token, newPassword);
   }
 }
