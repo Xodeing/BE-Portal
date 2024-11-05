@@ -5,6 +5,8 @@ import {Events} from './events.entity'
 import {ParticipantLists} from './participantLists.entity'
 import {TicketTransaction} from './ticketTransaction.entity'
 import {UserProfile} from './userProfile.entity'
+import {ShoppingSession} from './shoppingSession.entity'
+import {Orders} from './orders.entity'
 import {Token} from './token.entity'
 
 
@@ -41,5 +43,7 @@ Events?: Events[] ;
 ParticipantLists?: ParticipantLists[] ;
 TicketTransaction?: TicketTransaction[] ;
 userProfileId?: UserProfile[] ;
+ShoppingSession?: ShoppingSession[] ;
+Orders?: Orders[] ;
 tokens?: Token[] ;
 }

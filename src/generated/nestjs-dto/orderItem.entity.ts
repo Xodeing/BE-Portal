@@ -1,13 +1,10 @@
 
 import {ApiProperty} from '@nestjs/swagger'
-import {Users} from './users.entity'
-import {PaymentMethodProvider} from './paymentMethodProvider.entity'
 import {Orders} from './orders.entity'
-import {PaymentStatus} from './paymentStatus.entity'
-import {Refund} from './refund.entity'
+import {EventTicket} from './eventTicket.entity'
 
 
-export class TicketTransaction {
+export class OrderItem {
   @ApiProperty({
   type: `integer`,
   format: `int32`,
@@ -29,25 +26,17 @@ updatedBy: string  | null;
   type: `integer`,
   format: `int32`,
 })
-participantId: number ;
-@ApiProperty({
-  type: `integer`,
-  format: `int32`,
-})
-paymentMethodProviderId: number ;
-@ApiProperty({
-  type: `integer`,
-  format: `int32`,
-})
 orderId: number ;
 @ApiProperty({
   type: `integer`,
   format: `int32`,
 })
-paymentStatusId: number ;
-participant?: Users ;
-paymentMethodProvider?: PaymentMethodProvider ;
+ticketId: number ;
+@ApiProperty({
+  type: `integer`,
+  format: `int32`,
+})
+quantity: number ;
 order?: Orders ;
-paymentStatus?: PaymentStatus ;
-Refund?: Refund  | null;
+ticket?: EventTicket ;
 }

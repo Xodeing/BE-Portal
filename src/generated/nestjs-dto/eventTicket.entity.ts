@@ -2,7 +2,8 @@
 import {Prisma} from '@prisma/client'
 import {ApiProperty} from '@nestjs/swagger'
 import {Events} from './events.entity'
-import {TicketTransaction} from './ticketTransaction.entity'
+import {CartItem} from './cartItem.entity'
+import {OrderItem} from './orderItem.entity'
 
 
 export class EventTicket {
@@ -58,5 +59,6 @@ event?: Events ;
   format: `int32`,
 })
 eventId: number ;
-TicketTransaction?: TicketTransaction[] ;
+CartItem?: CartItem[] ;
+OrderItem?: OrderItem[] ;
 }
