@@ -454,5 +454,3 @@ generator nestjsDto {
   entitySuffix                    = ""
   fileNamingStyle                 = "camel"
 }
-
-//ppp
