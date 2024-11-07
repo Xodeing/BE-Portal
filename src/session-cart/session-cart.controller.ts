@@ -11,7 +11,9 @@ import { SessionCartService } from './session-cart.service';
 import { CreateShoppingSessionDto } from './dto/create-shopping-session.dto';
 import { CreateCartItemDto } from './dto/create-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Session-cart')
 @Controller('session-cart')
 export class SessionCartController {
   constructor(private readonly sessionCartService: SessionCartService) {}
