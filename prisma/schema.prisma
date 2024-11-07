@@ -219,7 +219,7 @@ model ShoppingSession {
   updatedAt        DateTime            @updatedAt
   createdBy        String?
   updatedBy        String?
-  userId           Int
+  userId           Int                 @unique
   user             Users               @relation(fields: [userId], references: [id])
   CartItem         CartItem[]
 

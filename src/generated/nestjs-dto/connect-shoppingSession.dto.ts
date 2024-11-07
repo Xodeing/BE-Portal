@@ -1,5 +1,6 @@
 
   export class ConnectShoppingSessionDto {
-    id: number;
+    id?: number;
+userId?: number;
   }
   

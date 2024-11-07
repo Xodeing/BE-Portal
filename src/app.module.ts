@@ -16,6 +16,7 @@ import { EventCategoriesModule } from './event-categories/event-categories.modul
 import { VanuesModule } from './vanues/vanues.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { EventTicketModule } from './event-ticket/event-ticket.module';
+import { SessionCartModule } from './session-cart/session-cart.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { EventTicketModule } from './event-ticket/event-ticket.module';
     VanuesModule,
     ScheduleModule,
     EventTicketModule,
+    SessionCartModule,
   ],
   controllers: [AppController, EventsController],
   providers: [AppService, EventsService, PrismaService],
