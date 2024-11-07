@@ -46,7 +46,7 @@ export class AuthController {
       httpOnly: true,
       secure: false, // Ubah menjadi true jika Anda menggunakan HTTPS
     });
-    res.redirect('http://localhost:3000/auth/google/callback');
+    res.redirect('http://localhost:3000');
   }
 
   @ApiBearerAuth()
