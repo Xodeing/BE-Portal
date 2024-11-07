@@ -29,7 +29,6 @@ export class AuthController {
     return this.authService.login(email, password);
   }
 
-  @ApiBearerAuth()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
@@ -37,7 +36,6 @@ export class AuthController {
   }
 
   // Google akan memanggil URL ini setelah login
-  @ApiBearerAuth()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req, @Res() res: Response) {
