@@ -9,7 +9,6 @@ import { AuthEntity } from './entities/auth.entity';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { addHours } from 'date-fns';
-import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -17,50 +16,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    // private mail: MailService, // Uncomment if you use mail service
   ) {}
-
-  // Fungsi untuk mendapatkan data pengguna dari Google
-  async getGoogleUserData(code: string) {
-    try {
-      // Tukar kode otorisasi dengan token
-      const tokenResponse = await axios.post(
-        'https://oauth2.googleapis.com/token',
-        {
-          code,
-          client_id: process.env.GOOGLE_CLIENT_ID,
-          client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: 'http://localhost:3000/auth/google/callback',
-          grant_type: 'authorization_code',
-        },
-      );
-
-      const { access_token } = tokenResponse.data;
-
-      // Ambil data pengguna dari Google menggunakan access token
-      const userResponse = await axios.get(
-        'https://www.googleapis.com/oauth2/v2/userinfo',
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        },
-      );
-
-      return {
-        access_token,
-        user: userResponse.data,
-      };
-    } catch (error) {
-      console.error('Error saat mengambil data pengguna Google:', error);
-      throw new Error('Autentikasi gagal');
-    }
-  }
-
-  // Fungsi login dengan Google, membuat JWT untuk pengguna
-  async loginWithGoogle(user: any): Promise<{ accessToken: string }> {
-    const payload = { userId: user.id, email: user.email }; // Atur payload sesuai dengan kebutuhan Anda
-    const accessToken = this.jwtService.sign(payload); // Membuat token JWT
-    return { accessToken }; // Kembalikan objek dengan accessToken
-  }
 
   // Fungsi login untuk autentikasi user dan mengembalikan token JWT
   async login(email: string, password: string): Promise<AuthEntity> {

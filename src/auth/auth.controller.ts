@@ -13,11 +13,12 @@ import { ApiOkResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthEntity } from './entities/auth.entity';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { Response } from 'express'; // Pastikan Anda mengimpor Response
+import { Response } from 'express';
 
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
+  googleService: any;
   constructor(private readonly authService: AuthService) {}
 
   // Endpoint untuk login menggunakan email dan password
@@ -28,56 +29,22 @@ export class AuthController {
     return this.authService.login(email, password);
   }
 
-  // Endpoint untuk login dengan Google (menggunakan AuthGuard)
+  @ApiTags('Auth')
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth() {
-    // Otomatis diarahkan ke halaman login Google
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async googleAuth(@Req() req) {}
 
-  // Endpoint callback setelah login Google
-  @Post('google/callback')
-  async googleCallback(@Body() body: { code: string }, @Res() res: Response) {
-    const { code } = body;
-
-    if (!code) {
-      throw new BadRequestException('Kode otorisasi tidak ditemukan');
-    }
-
-    try {
-      // Tukar kode otorisasi dengan token dan ambil data pengguna
-      const { access_token, user } =
-        await this.authService.getGoogleUserData(code);
-
-      // Simpan token di cookie
-      res.cookie('token', access_token, {
-        httpOnly: true,
-        secure: false, // Set true jika menggunakan HTTPS di production
-      });
-
-      // Kirimkan data pengguna dan token ke frontend
-      res.json({ success: true, user });
-    } catch (error) {
-      console.error('Error saat autentikasi:', error);
-      throw new BadRequestException('Autentikasi gagal');
-    }
-  }
-
-  // Endpoint callback dari Google menggunakan AuthGuard untuk token valid
-  @Get('google/callback/redirect')
+  @ApiTags('Auth')
+  @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req, @Res() res: Response) {
-    // Mendapatkan JWT setelah login menggunakan Google
-    const jwt = await this.authService.loginWithGoogle(req.user);
-
-    // Set token di cookie
+    const jwt = await this.googleService.loginWithGoogle(req.user);
     res.cookie('accessToken', jwt.accessToken, {
       httpOnly: true,
-      secure: false, // Ubah menjadi true jika menggunakan HTTPS
+      secure: false,
     });
-
-    // Redirect ke halaman utama
-    res.redirect('http://localhost:3000');
+    res.redirect('https://cms.eventives.id');
   }
 
   // Endpoint untuk reset password
