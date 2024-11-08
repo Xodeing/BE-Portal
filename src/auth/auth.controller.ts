@@ -48,12 +48,22 @@ export class AuthController {
     }
 
     try {
+      // Proses autentikasi dengan Google dan menghasilkan JWT
       const jwt = await this.googleService.loginWithGoogle(code);
+
+      // Simpan token di cookie
       res.cookie('accessToken', jwt.accessToken, {
-        httpOnly: true,
-        secure: false, // Ubah ke true untuk HTTPS di production
+        httpOnly: true, // Mencegah akses dari JavaScript (keamanan tambahan)
+        secure: process.env.NODE_ENV === 'production', // Gunakan secure di environment production
+        sameSite: 'lax', // Menentukan kebijakan SameSite
       });
-      res.json({ success: true, message: 'Login berhasil' });
+
+      // Kirimkan respon sukses
+      res.json({
+        success: true,
+        message: 'Login berhasil',
+        accessToken: jwt.accessToken,
+      });
     } catch (error) {
       console.error('Error saat autentikasi:', error);
       throw new BadRequestException('Autentikasi gagal');

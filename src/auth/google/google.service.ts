@@ -19,7 +19,7 @@ export class GoogleService {
           code,
           client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: 'http://localhost:3000',
+          redirect_uri: 'http://localhost:3000/auth/google/callback', // Pastikan URL ini benar
           grant_type: 'authorization_code',
         },
       );
@@ -32,6 +32,7 @@ export class GoogleService {
           headers: { Authorization: `Bearer ${access_token}` },
         },
       );
+
       return userResponse.data;
     } catch (error) {
       console.error('Error fetching Google user data:', error);
@@ -49,13 +50,14 @@ export class GoogleService {
       user = await this.prisma.users.create({
         data: {
           email: userData.email,
-          googleId: userData.googleId,
+          googleId: userData.id, // Menggunakan ID dari Google
           userProfileId: null, // Atur sesuai kebutuhan atau relasi yang tepat
-          userName: `${userData.firstName} ${userData.lastName}`,
-          password: '',
-          status: true,
+          userName:
+            userData.name || `${userData.given_name} ${userData.family_name}`, // Nama lengkap atau kombinasi
+          password: '', // Kosongkan karena menggunakan OAuth
+          status: true, // Status aktif
           role: {
-            connect: { id: 2 },
+            connect: { id: 2 }, // Role default (sesuaikan dengan database Anda)
           },
         },
       });
@@ -63,13 +65,16 @@ export class GoogleService {
 
     const payload = { userId: user.id };
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(payload), // Generate JWT untuk user
     };
   }
 
   // Login dengan Google (dari kode otorisasi)
   async loginWithGoogle(code: string): Promise<{ accessToken: string }> {
+    // Ambil data pengguna dari Google
     const googleUserData = await this.getGoogleUserData(code);
+
+    // Validasi user atau buat user baru jika belum ada
     return this.validateOAuthLogin(googleUserData);
   }
 }
