@@ -29,14 +29,19 @@ export class AuthController {
 
   @ApiTags('Auth')
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(AuthGuard('google')) // Pastikan Google Guard digunakan
   async callback(@Req() req, @Res() res: Response) {
-    const jwt = await this.googleService.loginWithGoogle(req.user);
-    res.cookie('accessToken', jwt.accessToken, {
-      httpOnly: true,
-      secure: false,
-    });
-    res.redirect('http://localhost:3000');
+    try {
+      const jwt = await this.googleService.loginWithGoogle(req.user);
+      res.cookie('accessToken', jwt.accessToken, {
+        httpOnly: true,
+        secure: false, // Pastikan secure diatur ke true di production
+      });
+      res.redirect('http://localhost:3000/success'); // Redirect setelah login sukses
+    } catch (error) {
+      console.error('Error saat login dengan Google:', error);
+      res.redirect('http://localhost:3000/error'); // Redirect ke halaman error jika gagal
+    }
   }
 
   @ApiTags('Reset Password')

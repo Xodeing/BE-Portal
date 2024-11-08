@@ -18,13 +18,13 @@ export class GoogleService {
       user = await this.prisma.users.create({
         data: {
           email: userData.email,
-          googleId: userData.googleId,
-          userProfileId: {},
+          googleId: userData.googleId, // Pastikan googleId ada
+          userProfileId: {}, // Sesuaikan dengan kebutuhan Anda
           userName: userData.firstName + ' ' + userData.lastName,
-          password: '',
+          password: '', // Kosongkan karena menggunakan OAuth
           status: true,
           role: {
-            connect: { id: 2 },
+            connect: { id: 2 }, // Sesuaikan dengan role di database Anda
           },
         },
       });
@@ -32,9 +32,10 @@ export class GoogleService {
 
     const payload = { userId: user.id };
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(payload), // Generate token JWT
     };
   }
+
   async loginWithGoogle(user: any) {
     const payload = { username: user.email, sub: user.userId };
     return {
