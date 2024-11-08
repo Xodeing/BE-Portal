@@ -2,24 +2,26 @@ import {
   Controller,
   Post,
   Body,
-  Req,
   Res,
   UseGuards,
   BadRequestException,
   Get,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { ApiOkResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { GoogleService } from './google/google.service';
 import { AuthEntity } from './entities/auth.entity';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
 
 @Controller('auth')
-@ApiTags('auth')
+@ApiTags('Auth')
 export class AuthController {
-  googleService: any;
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly googleService: GoogleService,
+  ) {}
 
   // Endpoint untuk login menggunakan email dan password
   @Post('login')
@@ -29,25 +31,36 @@ export class AuthController {
     return this.authService.login(email, password);
   }
 
-  @ApiTags('Auth')
+  // Endpoint untuk autentikasi dengan Google (Langkah awal)
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async googleAuth(@Req() req) {}
-
-  @ApiTags('Auth')
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async callback(@Req() req, @Res() res: Response) {
-    const jwt = await this.googleService.loginWithGoogle(req.user);
-    res.cookie('accessToken', jwt.accessToken, {
-      httpOnly: true,
-      secure: false,
-    });
-    res.redirect('http://localhost:3000');
+  async googleAuth() {
+    // Google OAuth akan memulai proses di sini.
   }
 
-  // Endpoint untuk reset password
+  // Endpoint callback setelah autentikasi Google berhasil
+  @Post('google/callback')
+  async callback(@Body() body: { code: string }, @Res() res: Response) {
+    const { code } = body;
+
+    if (!code) {
+      throw new BadRequestException('Kode otorisasi tidak ditemukan');
+    }
+
+    try {
+      const jwt = await this.googleService.loginWithGoogle(code);
+      res.cookie('accessToken', jwt.accessToken, {
+        httpOnly: true,
+        secure: false, // Ubah ke true untuk HTTPS di production
+      });
+      res.json({ success: true, message: 'Login berhasil' });
+    } catch (error) {
+      console.error('Error saat autentikasi:', error);
+      throw new BadRequestException('Autentikasi gagal');
+    }
+  }
+
+  // Endpoint untuk permintaan reset password
   @ApiBearerAuth()
   @ApiTags('Reset Password')
   @Post('request-password-reset')
@@ -58,6 +71,7 @@ export class AuthController {
     return this.authService.requestPasswordReset(email);
   }
 
+  // Endpoint untuk reset password
   @ApiBearerAuth()
   @ApiTags('Reset Password')
   @Post('reset-password')
