@@ -6,6 +6,7 @@ import {
   UseGuards,
   BadRequestException,
   Get,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -39,34 +40,22 @@ export class AuthController {
   }
 
   // Endpoint callback setelah autentikasi Google berhasil
-  @Post('google/callback')
-  async callback(@Body() body: { code: string }, @Res() res: Response) {
-    const { code } = body;
-
+  @Get('google/callback') // Menambahkan metode GET di sini
+  async googleCallback(@Query('code') code: string, @Res() res: Response) {
     if (!code) {
       throw new BadRequestException('Kode otorisasi tidak ditemukan');
     }
 
     try {
-      // Proses autentikasi dengan Google dan menghasilkan JWT
       const jwt = await this.googleService.loginWithGoogle(code);
-
-      // Simpan token di cookie
       res.cookie('accessToken', jwt.accessToken, {
-        httpOnly: true, // Mencegah akses dari JavaScript (keamanan tambahan)
-        secure: process.env.NODE_ENV === 'production', // Gunakan secure di environment production
-        sameSite: 'lax', // Menentukan kebijakan SameSite
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Hanya true di production
       });
-
-      // Kirimkan respon sukses
-      res.json({
-        success: true,
-        message: 'Login berhasil',
-        accessToken: jwt.accessToken,
-      });
+      res.redirect('http://localhost:3000/success'); // Redirect ke halaman frontend setelah sukses
     } catch (error) {
       console.error('Error saat autentikasi:', error);
-      throw new BadRequestException('Autentikasi gagal');
+      res.redirect('http://localhost:3000/error'); // Redirect ke halaman error jika gagal
     }
   }
 
