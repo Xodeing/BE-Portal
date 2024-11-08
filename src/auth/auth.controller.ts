@@ -1,12 +1,12 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Req,
   Res,
   UseGuards,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiOkResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -18,10 +18,9 @@ import { Response } from 'express'; // Pastikan Anda mengimpor Response
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
-  authS: any;
   constructor(private readonly authService: AuthService) {}
 
-  @ApiTags('auth')
+  // Endpoint untuk login menggunakan email dan password
   @Post('login')
   @ApiBearerAuth()
   @ApiOkResponse({ type: AuthEntity })
@@ -29,24 +28,59 @@ export class AuthController {
     return this.authService.login(email, password);
   }
 
+  // Endpoint untuk login dengan Google (menggunakan AuthGuard)
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
-    // Otomatis diarahkan ke Google Login
+    // Otomatis diarahkan ke halaman login Google
   }
 
-  // Google akan memanggil URL ini setelah login
-  @Get('google/callback')
+  // Endpoint callback setelah login Google
+  @Post('google/callback')
+  async googleCallback(@Body() body: { code: string }, @Res() res: Response) {
+    const { code } = body;
+
+    if (!code) {
+      throw new BadRequestException('Kode otorisasi tidak ditemukan');
+    }
+
+    try {
+      // Tukar kode otorisasi dengan token dan ambil data pengguna
+      const { access_token, user } =
+        await this.authService.getGoogleUserData(code);
+
+      // Simpan token di cookie
+      res.cookie('token', access_token, {
+        httpOnly: true,
+        secure: false, // Set true jika menggunakan HTTPS di production
+      });
+
+      // Kirimkan data pengguna dan token ke frontend
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error('Error saat autentikasi:', error);
+      throw new BadRequestException('Autentikasi gagal');
+    }
+  }
+
+  // Endpoint callback dari Google menggunakan AuthGuard untuk token valid
+  @Get('google/callback/redirect')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req, @Res() res: Response) {
+    // Mendapatkan JWT setelah login menggunakan Google
     const jwt = await this.authService.loginWithGoogle(req.user);
+
+    // Set token di cookie
     res.cookie('accessToken', jwt.accessToken, {
       httpOnly: true,
-      secure: false, // Ubah menjadi true jika Anda menggunakan HTTPS
+      secure: false, // Ubah menjadi true jika menggunakan HTTPS
     });
+
+    // Redirect ke halaman utama
     res.redirect('http://localhost:3000');
   }
 
+  // Endpoint untuk reset password
   @ApiBearerAuth()
   @ApiTags('Reset Password')
   @Post('request-password-reset')
@@ -54,7 +88,7 @@ export class AuthController {
     if (!email) {
       throw new BadRequestException('Email is required');
     }
-    return this.authS.requestPasswordReset(email);
+    return this.authService.requestPasswordReset(email);
   }
 
   @ApiBearerAuth()
@@ -67,6 +101,6 @@ export class AuthController {
     if (!token || !newPassword) {
       throw new BadRequestException('Token and new password are required');
     }
-    return this.authS.resetPassword(token, newPassword);
+    return this.authService.resetPassword(token, newPassword);
   }
 }
