@@ -1,3 +1,4 @@
+// src/auth/auth.controller.ts
 import {
   BadRequestException,
   Body,
@@ -31,12 +32,24 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req, @Res() res: Response) {
-    const jwt = await this.googleService.loginWithGoogle(req.user);
-    res.cookie('accessToken', jwt.accessToken, {
-      httpOnly: true,
-      secure: false,
-    });
-    res.redirect('http://localhost:3000');
+    const code = req.query.code as string; // Mengambil kode dari query string
+    if (!code) {
+      throw new BadRequestException('Code is required');
+    }
+
+    // Panggil handleGoogleOAuthCallback untuk mendapatkan JWT
+    const jwt = await this.googleService.handleGoogleOAuthCallback(code);
+
+    // Pastikan jwt berisi accessToken
+    if (jwt && jwt.accessToken) {
+      res.cookie('accessToken', jwt.accessToken, {
+        httpOnly: true,
+        secure: false, // Ubah ke true di production
+      });
+      res.redirect('http://localhost:3000'); // Ganti dengan halaman yang sesuai
+    } else {
+      throw new BadRequestException('Autentikasi gagal');
+    }
   }
 
   @ApiTags('Reset Password')
