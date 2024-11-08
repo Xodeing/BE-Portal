@@ -19,7 +19,7 @@ export class GoogleService {
           code,
           client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: 'http://localhost:3000/auth/google/callback',
+          redirect_uri: 'http://localhost:3000',
           grant_type: 'authorization_code',
         },
       );
@@ -32,7 +32,6 @@ export class GoogleService {
           headers: { Authorization: `Bearer ${access_token}` },
         },
       );
-
       return userResponse.data;
     } catch (error) {
       console.error('Error fetching Google user data:', error);
