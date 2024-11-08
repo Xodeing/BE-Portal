@@ -36,7 +36,7 @@ export class AuthController {
       httpOnly: true,
       secure: false,
     });
-    res.redirect('http://localhost:3000/auth/google/callback');
+    res.redirect('http://localhost:3000');
   }
 
   @ApiTags('Reset Password')
