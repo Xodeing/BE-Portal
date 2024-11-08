@@ -50,7 +50,7 @@ export class GoogleService {
           code,
           client_id: process.env.GOOGLE_CLIENT_ID, // Pastikan client_id dan client_secret sudah diatur
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: `http://localhost:3000/auth/google/callback`,
+          redirect_uri: `https://beportal1-c69uolb8.b4a.run/auth/google/callback`,
           grant_type: 'authorization_code',
         }),
       );
