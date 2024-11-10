@@ -1,61 +1,68 @@
-// src/auth/auth.controller.ts
 import {
-  BadRequestException,
-  Body,
   Controller,
-  Get,
   Post,
-  Req,
+  Body,
   Res,
   UseGuards,
+  BadRequestException,
+  Get,
+  Req,
 } from '@nestjs/common';
-import { GoogleService } from './google/google.service';
-import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { GoogleService } from './google/google.service';
+import { AuthEntity } from './entities/auth.entity';
+import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
-import { ApiTags } from '@nestjs/swagger';
 
 @Controller('auth')
+@ApiTags('Auth')
 export class AuthController {
   constructor(
-    private googleService: GoogleService,
-    private authS: AuthService,
+    private readonly authService: AuthService,
+    private readonly googleService: GoogleService,
   ) {}
 
+  // Endpoint untuk login menggunakan email dan password
+  @Post('login')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: AuthEntity })
+  login(@Body() { email, password }: LoginDto) {
+    return this.authService.login(email, password);
+  }
+
+  @ApiTags('Auth')
   @Get('google')
   @UseGuards(AuthGuard('google'))
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async googleAuth(@Req() req) {}
 
+  @ApiTags('Auth')
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req, @Res() res: Response) {
-    const code = req.query.code as string;
-    if (!code) {
-      throw new BadRequestException('Code is required');
-    }
-
-    const jwt = await this.googleService.handleGoogleOAuthCallback(code);
-
-    if (jwt && jwt.accessToken) {
-      res.cookie('accessToken', jwt.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-      });
-      res.redirect('http://localhost:3000');
-    } else {
-      throw new BadRequestException('Authentication failed');
-    }
+    const jwt = await this.googleService.loginWithGoogle(req.user);
+    res.cookie('accessToken', jwt.accessToken, {
+      httpOnly: true,
+      secure: false,
+    });
+    res.redirect('http://localhost:3001');
   }
+
+  // Endpoint untuk permintaan reset password
+  @ApiBearerAuth()
   @ApiTags('Reset Password')
   @Post('request-password-reset')
   async requestPasswordReset(@Body('email') email: string) {
     if (!email) {
       throw new BadRequestException('Email is required');
     }
-    return this.authS.requestPasswordReset(email);
+    return this.authService.requestPasswordReset(email);
   }
 
+  // Endpoint untuk reset password
+  @ApiBearerAuth()
   @ApiTags('Reset Password')
   @Post('reset-password')
   async resetPassword(
@@ -65,6 +72,6 @@ export class AuthController {
     if (!token || !newPassword) {
       throw new BadRequestException('Token and new password are required');
     }
-    return this.authS.resetPassword(token, newPassword);
+    return this.authService.resetPassword(token, newPassword);
   }
 }
