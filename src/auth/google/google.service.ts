@@ -11,8 +11,6 @@ export class GoogleService {
     private readonly prisma: PrismaService,
   ) {}
 
-  // Menghapus method loginWithGoogle yang tidak perlu
-  // Menambahkan validasi dan pembuatan token
   async validateOAuthLogin(userData: any): Promise<any> {
     let user = await this.prisma.users.findUnique({
       where: { email: userData.email },
@@ -23,42 +21,38 @@ export class GoogleService {
         data: {
           email: userData.email,
           googleId: userData.googleId,
-          userProfileId: {},
-          userName: userData.firstName + ' ' + userData.lastName,
-          password: '', // Karena menggunakan Google OAuth, password kosong
+          userProfileId: {}, // Ganti jika ada relasi spesifik
+          userName: `${userData.firstName} ${userData.lastName}`,
+          password: '', // Kosongkan karena menggunakan OAuth
           status: true,
           role: {
-            connect: { id: 2 }, // Pastikan role sudah sesuai
+            connect: { id: 2 }, // Role visitor
           },
         },
       });
     }
 
-    const payload = { userId: user.id };
+    const payload = { sub: user.id, email: user.email, role: 'visitor' };
     return {
-      accessToken: this.jwtService.sign(payload), // Menghasilkan token JWT
+      accessToken: this.jwtService.sign(payload), // Menghasilkan JWT
     };
   }
 
-  // Menangani callback Google OAuth
   async handleGoogleOAuthCallback(code: string) {
     try {
-      // 1. Tukar kode otorisasi menjadi akses token
       const { data } = await axios.post(
         'https://oauth2.googleapis.com/token',
         new URLSearchParams({
           code,
-          client_id: process.env.GOOGLE_CLIENT_ID, // Pastikan client_id dan client_secret sudah diatur
+          client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
           redirect_uri: `https://beportal1-c69uolb8.b4a.run/auth/google/callback`,
           grant_type: 'authorization_code',
         }),
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { access_token, id_token } = data;
+      const { access_token } = data;
 
-      // 2. Ambil data profil pengguna menggunakan access token
       const userData = await axios.get(
         'https://www.googleapis.com/oauth2/v3/userinfo',
         {
@@ -68,11 +62,10 @@ export class GoogleService {
         },
       );
 
-      // 3. Validasi dan buat token JWT untuk pengguna
       return this.validateOAuthLogin(userData.data);
     } catch (error) {
-      console.error('Error saat login dengan Google: ', error);
-      throw new Error('Autentikasi gagal');
+      console.error('Error Google OAuth:', error);
+      throw new Error('Authentication failed');
     }
   }
 }

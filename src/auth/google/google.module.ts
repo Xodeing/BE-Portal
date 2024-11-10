@@ -6,6 +6,7 @@ import { GoogleController } from './google.controller';
 import { GoogleService } from './google.service';
 import { JwtStrategy } from '../jwt.strategy';
 import { GoogleStrategy } from '../strategies/google.strategy';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { GoogleStrategy } from '../strategies/google.strategy';
     }),
   ],
   controllers: [GoogleController],
-  providers: [GoogleService, JwtStrategy, GoogleStrategy],
+  providers: [GoogleService, JwtStrategy, GoogleStrategy, PrismaService],
   exports: [GoogleService],
 })
 export class GoogleModule {}

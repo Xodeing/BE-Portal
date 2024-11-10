@@ -22,36 +22,31 @@ export class AuthController {
     private authS: AuthService,
   ) {}
 
-  @ApiTags('Auth')
   @Get('google')
   @UseGuards(AuthGuard('google'))
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async googleAuth(@Req() req) {}
 
-  @ApiTags('Auth')
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req, @Res() res: Response) {
-    const code = req.query.code as string; // Mengambil kode dari query string
+    const code = req.query.code as string;
     if (!code) {
       throw new BadRequestException('Code is required');
     }
 
-    // Panggil handleGoogleOAuthCallback untuk mendapatkan JWT
     const jwt = await this.googleService.handleGoogleOAuthCallback(code);
 
-    // Pastikan jwt berisi accessToken
     if (jwt && jwt.accessToken) {
       res.cookie('accessToken', jwt.accessToken, {
         httpOnly: true,
-        secure: false, // Ubah ke true di production
+        secure: process.env.NODE_ENV === 'production',
       });
-      res.redirect('http://localhost:3000'); // Ganti dengan halaman yang sesuai
+      res.redirect('http://localhost:3000');
     } else {
-      throw new BadRequestException('Autentikasi gagal');
+      throw new BadRequestException('Authentication failed');
     }
   }
-
   @ApiTags('Reset Password')
   @Post('request-password-reset')
   async requestPasswordReset(@Body('email') email: string) {

@@ -28,11 +28,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       firstName: name.givenName,
       lastName: name.familyName,
     });
-    // console.log('Access Token:', access_token);
-    // return done(null, {
-    //     access_token,
-    //     profile
-    // });
     done(null, user);
   }
 }
