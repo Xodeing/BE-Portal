@@ -48,7 +48,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production', // Pastikan menggunakan HTTPS di production
       sameSite: 'strict', // Pastikan cookie hanya dikirimkan pada permintaan dari domain yang sama
     });
-    res.redirect('http://localhost:3001'); // Ganti dengan URL yang sesuai
+    res.redirect('http://localhost:3000'); // Ganti dengan URL yang sesuai
   }
 
   // Endpoint untuk permintaan reset password
