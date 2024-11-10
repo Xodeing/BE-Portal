@@ -22,17 +22,20 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done: VerifyCallback,
   ): Promise<any> {
     const { id, name, emails } = profile;
+
+    // Mengambil data user yang telah terverifikasi atau membuat akun baru
     const user = await this.googleS.validateOAuthLogin({
       googleId: id,
       email: emails[0].value,
       firstName: name.givenName,
       lastName: name.familyName,
     });
-    // console.log('Access Token:', access_token);
-    // return done(null, {
-    //     access_token,
-    //     profile
-    // });
-    done(null, user);
+
+    // Return done dengan informasi user yang sudah diproses
+    // Di sini kita bisa memutuskan untuk mengembalikan hanya user atau juga accessToken
+    done(null, {
+      user, // Ini mengembalikan objek user
+      accessToken: user.accessToken, // Jika Anda ingin mengembalikan token juga, pastikan itu ada di 'user'
+    });
   }
 }
