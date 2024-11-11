@@ -76,5 +76,3 @@ export class AuthController {
     return this.authService.resetPassword(token, newPassword);
   }
 }
-
-// ppp
