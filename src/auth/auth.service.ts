@@ -6,9 +6,9 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthEntity } from './entities/auth.entity';
-import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { addHours } from 'date-fns';
+import * as argon2 from 'argon2'; // Import argon2
 
 @Injectable()
 export class AuthService {
@@ -26,7 +26,8 @@ export class AuthService {
 
     if (!user) throw new NotFoundException(`No user found for email: ${email}`);
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Menggunakan argon2 untuk memverifikasi password
+    const isPasswordValid = await argon2.verify(user.password, password);
     if (!isPasswordValid)
       throw new UnauthorizedException('Invalid credentials');
 
@@ -83,7 +84,8 @@ export class AuthService {
       throw new NotFoundException('Token expired');
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // Menggunakan argon2 untuk hash password baru
+    const hashedPassword = await argon2.hash(newPassword);
     await this.prisma.users.update({
       where: { id: tokenRecord.userId },
       data: { password: hashedPassword },

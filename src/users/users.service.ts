@@ -6,10 +6,8 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2'; // Import argon2
 import { Prisma } from '@prisma/client';
-
-export const roundsOfHashing = 10;
 
 @Injectable()
 export class UsersService {
@@ -21,10 +19,9 @@ export class UsersService {
       throw new Error('Password is required');
     }
 
-    const hashedPassword = await bcrypt.hash(
-      createUserDto.password,
-      roundsOfHashing,
-    );
+    // Menggunakan argon2 untuk hash password tanpa saltLength
+    const hashedPassword = await argon2.hash(createUserDto.password);
+
     const userData = {
       ...createUserDto,
       password: hashedPassword,
@@ -76,10 +73,8 @@ export class UsersService {
   // Metode untuk memperbarui pengguna berdasarkan ID
   async update(id: number, updateUserDto: UpdateUserDto) {
     if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(
-        updateUserDto.password,
-        roundsOfHashing,
-      );
+      // Menggunakan argon2 untuk hash password baru tanpa saltLength
+      updateUserDto.password = await argon2.hash(updateUserDto.password);
     }
 
     const updateData: any = { ...updateUserDto };
