@@ -30,6 +30,8 @@ model Users {
   ParticipantLists  ParticipantLists[]
   TicketTransaction TicketTransaction[]
   userProfileId    UserProfile[]
+  ShoppingSession  ShoppingSession[]
+  Orders           Orders[]
 
   tokens Token[]
 
@@ -211,6 +213,34 @@ model ParticipantLists {
   @@map("participantLists")
 }
 
+model ShoppingSession {
+  id               Int                 @id @default(autoincrement())
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  createdBy        String?
+  updatedBy        String?
+  userId           Int                 @unique
+  user             Users               @relation(fields: [userId], references: [id])
+  CartItem         CartItem[]
+
+  @@map("shopping_session")
+}
+
+model CartItem {
+  id               Int                 @id @default(autoincrement())
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  createdBy        String?
+  updatedBy        String?
+  sessionId        Int
+  ticketId         Int
+  quantity         Int
+  session          ShoppingSession     @relation(fields: [sessionId], references: [id])
+  ticket           EventTicket         @relation(fields: [ticketId], references: [id])
+
+  @@map("cart_item")
+}
+
 model EventTicket {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
@@ -230,24 +260,126 @@ model EventTicket {
 
   event             Events              @relation(fields: [eventId], references: [id])
   eventId           Int
-  TicketTransaction TicketTransaction[]
+  CartItem         CartItem[]
+  OrderItem        OrderItem[]
 
   @@map("eventTicket")
 }
 
+model Orders {
+  id               Int                 @id @default(autoincrement())
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  createdBy        String?
+  updatedBy        String?
+  userId           Int
+  totalAmount      Decimal
+  orderStatus      String
+  user             Users               @relation(fields: [userId], references: [id])
+  OrderItem        OrderItem[]
+  TicketTransaction TicketTransaction[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id               Int                 @id @default(autoincrement())
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  createdBy        String?
+  updatedBy        String?
+  orderId          Int
+  ticketId         Int
+  quantity         Int
+  order            Orders              @relation(fields: [orderId], references: [id])
+  ticket           EventTicket         @relation(fields: [ticketId], references: [id])
+
+  @@map("order_item")
+}
+
+model Provider {
+  id               Int                 @id @default(autoincrement())
+  providerCode     String              @unique @db.VarChar(10)
+  providerName     String              @db.VarChar(100)
+  logoUrl          String              @db.VarChar(255)
+  supportTransfer  Boolean             @default(true)
+  supportVa        Boolean             @default(true)
+  vaPrefix         String?             @db.VarChar(20)
+  currency         String              @default("IDR") @db.VarChar(10)
+  status           Boolean             @default(true)
+  description      String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  PaymentMethodProvider PaymentMethodProvider[]
+
+  @@map("provider")
+}
+
+model PaymentMethod {
+  id               Int                 @id @default(autoincrement())
+  methodName       String              @db.VarChar(50)
+  providerName     String              @db.VarChar(100)
+  status           Boolean             @default(true)
+  description      String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  PaymentMethodProvider PaymentMethodProvider[]
+
+  @@map("payment_method")
+}
+
+model PaymentMethodProvider {
+  id               Int                 @id @default(autoincrement())
+  paymentMethodId  Int
+  providerId       Int
+  paymentMethod    PaymentMethod       @relation(fields: [paymentMethodId], references: [id])
+  provider         Provider            @relation(fields: [providerId], references: [id])
+  TicketTransaction TicketTransaction[]
+
+  @@map("payment_method_provider")
+}
+
 model TicketTransaction {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String?
-  updatedBy String?
+  id                      Int                  @id @default(autoincrement())
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  createdBy               String?
+  updatedBy               String?
+  participantId           Int
+  paymentMethodProviderId Int
+  orderId                 Int
+  paymentStatusId         Int
+  participant             Users               @relation(fields: [participantId], references: [id])
+  paymentMethodProvider   PaymentMethodProvider @relation(fields: [paymentMethodProviderId], references: [id])
+  order                   Orders              @relation(fields: [orderId], references: [id])
+  paymentStatus           PaymentStatus       @relation(fields: [paymentStatusId], references: [id])
+  Refund                  Refund?
 
-  participant   Users       @relation(fields: [participantId], references: [id])
-  participantId Int
-  ticket        EventTicket @relation(fields: [ticketId], references: [id])
-  ticketId      Int
+  @@map("ticket_transaction")
+}
 
-  @@map("ticketTransaction")
+model PaymentStatus {
+  id               Int                 @id @default(autoincrement())
+  statusName       String
+  description      String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  TicketTransaction TicketTransaction[]
+
+  @@map("payment_status")
+}
+
+model Refund {
+  id                      Int                 @id @default(autoincrement())
+  ticketTransactionId     Int                 @unique
+  amount                  Decimal
+  reason                  String?
+  status                  String              @db.VarChar(50)
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  ticketTransaction       TicketTransaction   @relation(fields: [ticketTransactionId], references: [id])
+
+  @@map("refund")
 }
 
 model Token {
